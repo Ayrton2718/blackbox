@@ -1,0 +1,22 @@
+#!/bin/bash
+
+LOG_DIR="/tmp/blackbox_log"
+TMP_DIR="/tmp/blackbox_tmporary/"
+
+START_TIME="$(date '+%Y-%m-%d_%H-%M-%S')"
+TMP_LOG="$TMP_DIR"blackbox_"$START_TIME"
+
+mkdir -m 777 -p $TMP_DIR
+
+if [ -d "$LOG_DIR" ]; then
+    if [ "$(ls -A $LOG_DIR | wc -l)" -eq 0 ]; then
+        echo "A valid directory already exists."
+        exit 0
+    fi
+fi
+
+mkdir -m 777 -p $TMP_LOG
+ln -nfs $TMP_LOG "$LOG_DIR"
+echo "New logging dir $TMP_LOG"
+
+blackbox_archive $TMP_LOG

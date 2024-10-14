@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# 出力ファイル名が指定されていない場合はエラーメッセージを表示して終了
+if [ -z "$1" ]; then
+    echo "Usage: $0 /tmp/blackbox_log or /var/tmp/<blackbox_xxxx>"
+    exit 1
+fi
+
+TARGET_DIR="$1"
+
+# TARGET_DIRを絶対パスに変換
+TARGET_DIR=$(realpath "$TARGET_DIR")
+
+# OUTPUT_DIRが存在しない場合はスクリプトを中止
+if [ ! -d "$TARGET_DIR" ]; then
+    echo "Specified directory does not exist: $TARGET_DIR"
+    exit 1
+fi
+
+# ディレクトリ名の末尾を確認して適切に処理
+# 末尾がスラッシュ('/')でない場合は追加
+# 末尾がピリオド('.')である場合はそれを取り除く
+if [[ "$TARGET_DIR" == */. ]]; then
+    TARGET_DIR="${TARGET_DIR%/.}"
+elif [[ "$TARGET_DIR" != */ ]]; then
+    TARGET_DIR="$TARGET_DIR/"
+fi
+
+# 出力ファイル名
+OUTPUT_FILE="${TARGET_DIR}""merged.mcap"
+if [ -e "$OUTPUT_FILE" ]; then
+    rm -rf "$OUTPUT_FILE"
+fi
+
+# MCAPファイルを検索して配列に格納
+MCAP_FILES=$(find $TARGET_DIR -type f -name "*.mcap")
+
+# mcap merge コマンドを実行
+mcap merge -o "${TARGET_DIR}""merged.mcap" ${MCAP_FILES}

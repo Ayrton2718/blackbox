@@ -1,0 +1,14 @@
+[Unit]
+Description=Black box archive when shutdown
+DefaultDependencies=no
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+User={{ ansible_facts['user_id'] }}
+Group={{ ansible_facts['user_id'] }}
+Type=oneshot
+ExecStart=/usr/bin/blackbox_archive
+RemainAfterExit=false
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target

@@ -1,0 +1,52 @@
+---
+- name: Install ROS Humble rosbag2 storage mcap
+  become: yes
+  apt:
+    name: ros-humble-rosbag2-storage-mcap
+    state: present
+
+- name: Download mcap binary
+  become: yes
+  get_url:
+    url: https://github.com/foxglove/mcap/releases/download/releases%2Fmcap-cli%2Fv0.0.34/mcap-linux-amd64
+    dest: /usr/bin/mcap
+    mode: '0755'
+
+- name: Copy blackbox_archive script
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/roles/blackbox/script/blackbox_archive"
+    dest: /usr/bin/blackbox_archive
+    mode: '0755'
+
+- name: Copy blackbox_create script
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/roles/blackbox/script/blackbox_create"
+    dest: /usr/bin/blackbox_create
+    mode: '0755'
+
+- name: Copy blackbox_merge script
+  become: yes
+  copy:
+    src: "{{ playbook_dir }}/roles/blackbox/script/blackbox_merge"
+    dest: /usr/bin/blackbox_merge
+    mode: '0755'
+
+- name: Create systemd service file for blackbox-archive.service
+  become: yes
+  template:
+    src: "{{ playbook_dir }}/roles/blackbox/script/blackbox-archive.service"
+    dest: /etc/systemd/system/blackbox-archive.service
+    mode: '0644'
+
+- name: Reload systemd daemon
+  become: yes
+  command: systemctl daemon-reload
+
+- name: Enable blackbox-archive service
+  become: yes
+  systemd:
+    name: blackbox-archive.service
+    enabled: yes
+    state: started

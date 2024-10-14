@@ -228,9 +228,4 @@ std::string get_rosbag_path(std::string ns, std::string node, std::string rosbag
     return result_path;
 }
 
-// std::string node_logger(std::string ns, std::string node)
-// {
-    
-// }
-
 }
