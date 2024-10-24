@@ -4,7 +4,6 @@ project(blackbox)
 add_definitions(-DBLACKBOX_PARAM_DIRECTORY="${CMAKE_CURRENT_SOURCE_DIR}/config")
 
 find_package(tutrc_ament REQUIRED)
-find_package(diagnostic_updater REQUIRED)
 
 tutrc_ament_init()
 
