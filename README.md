@@ -142,5 +142,5 @@ blackbox_merge .
 ```
 
 # Overview
-![overview](docs/overview.png)
+![overview](docs/overview.drawio.svg)
 ![example_log](docs/example_log.png)
