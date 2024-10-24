@@ -12,6 +12,12 @@ Foxglove Studioは日本語に対応しており、設定から言語変更が�
 # インストール
 ```bash
 sudo apt install -y ansible
+```
+
+ros2ワークスペースのsrc内
+```bash
+git clone https://github.com/Ayrton2718/blackbox.git
+cd blackbox
 ansible-playbook --ask-become-pass ansible/dev.yml
 ```
 
