@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 
+// ログファイルの出力先
 #define TAGLOG_BASE_DIR  "/tmp/blackbox_log"
 #define TAGLOG_LOG_DIR(node, tim) (TAGLOG_BASE_DIR"/" + node + "-" + tim)
 #define TAGLOG_LOG_DIR_WITH_NS(ns, node, tim) (TAGLOG_BASE_DIR + ns + "-" + node + "-" + tim)

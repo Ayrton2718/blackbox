@@ -1,5 +1,5 @@
 # BlackBox
-BlackBoxライブラリは、航空機のフライトレコーダーに着想を得たもので、ロボットのTopic、ログ、エラー、パラメータ、変数などの状態を記録し、後で分析することができます（リアルタイムでもできます）。ログデータはmcap形式で保存され、[Foxglove](https://foxglove.dev/)や[rosbag2](https://github.com/ros2/rosbag2)と組み合わせることで、強力な分析ツールとして活用できます。
+BlackBoxはROS2用のロギングライブラリです。このライブラリを使用すると、プロセス内でrosbagファイル（Mcap形式）を作成できるため、rosbagファイル作成用の専用ノードを起動する必要がなく、Pub/Sub操作も不要になります。 このライブラリを活用することで、実行時のコンソールログ、独自メッセージ、Pub/Subメッセージを1つのrosbagファイルにまとめて保存することが可能です。作成されたrosbagファイルは[rosbag2](https://github.com/ros2/rosbag2)や[Foxglove](https://foxglove.dev/)でそのまま解析やシミュレーションを行うことができます。
 
 # Foxgloveについて
 Foxgloveは、Foxglove Studio（GUIツール）とFoxglove Bridge（ROS2の通信をWebSocketに変換するツール）から構成されています。Foxglove Studioはmcapファイルを直接解析でき、Windows、Mac、スマホ（ブラウザ）で動作します。ROS2が起動しているLinux上でFoxglove Bridgeを起動し、Foxglove StudioでそのIPとポート番号を指定することで接続できます。
@@ -27,21 +27,6 @@ public:
 ```
 
 `blackbox::debug_mode_t::DEBUG`で、このノードのデバッグモードを指定できます（詳しくは[Logger](#logger)）。
-
-## Diagnostic
-各モジュールの状態を監視するためのものです。`rviz`や`Foxglove`を用いることで、可視化することができます。`smbus`のセンサやアクチュエータには既にDiagnosticが組み込まれているため、`smbus`を使用する際は、センサ一つ一つにDiagnosticを適用する必要はありません。センサの初期化やオフセットの成功状態などに適用することができます。
-
-[GitHub](https://github.com/ros/diagnostics/tree/ros2)  
-[Foxglove Diagnostics Panel](https://docs.foxglove.dev/docs/visualization/panels/diagnostics/)  
-[ROS1での仕様例](https://qiita.com/srs/items/46c8593dad23497902a8)  
-
-```c++
-blackbox::Diagnostic _diag1;
-_diag1.init(this, "diag1");                 // Diagnosticのモジュール名を指定する
-_diag1.ok("OK");                            // 状態とメッセージを設定
-_diag1.warn("sometime lost connection");
-_diag1.error("lost connection");
-```
 
 ## Logger
 実行中のデバッグメッセージをレコードすることができます。ログごとにログの重要度とタグ名を設定することができます。`Foxglove Studio`のLogパネルを用いることで、ログの出力を確認することができます。ログは、`/tagger/namespace/node_name`に格納されています。

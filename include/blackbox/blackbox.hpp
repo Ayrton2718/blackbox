@@ -1,6 +1,5 @@
 #pragma once
 
-#include "bb_diagnostics.hpp"
 #include "bb_logger.hpp"
 #include "bb_record.hpp"
 #include "bb_pub_record.hpp"

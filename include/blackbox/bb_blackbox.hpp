@@ -8,22 +8,24 @@
 namespace blackbox
 {
 
+// mcapファイルの圧縮設定
 enum class storage_profile_t {
     fastwrite,  // Configures the MCAP writer for the highest possible write throughput and lowest resource utilization. This preset does not calculate CRCs for integrity checking, and does not write a message index. Useful for resource-constrained robots.
     zstd_fast,  // Configures the MCAP writer to use chunk compression with zstd at the lowest compression ratio and disables CRC calculation, to achieve high throughput while conserving disk space.
     zstd_small  // Configures the MCAP writer to write 4MB chunks, compressed with zstd using its highest compression ratio. Calculates chunk CRCs, useful when using ros2 bag convert as a post-processing step.
 };
 
+/// @brief デバッグモードを指定する
 enum class debug_mode_t{
     RELEASE,
     DEBUG,
 };
 
 
-/// @brief 
 class BlackBox
 {
 public:
+    // メッセージの書き込みを行うクラス（blackbox::Loggerやblackbox::Recordなどで使用）
     template<typename MessageT>
     class BlackBoxWriter
     {
@@ -103,10 +105,18 @@ public:
 
     /// @brief 
     /// @tparam MessageT 
-    /// @param node 
+    /// @param node rclcpp::Nodeのポインタ
     /// @param storage_preset_profile 
     /// @param max_cache_size
-    BlackBox(rclcpp::Node* node, debug_mode_t debug_mode, std::string file_name="blackbox", storage_profile_t storage_preset_profile=storage_profile_t::zstd_fast, uint64_t max_cache_size = 1024);
+
+
+    /// @brief 
+    /// @param node rclcpp::Nodeのポインタ
+    /// @param debug_mode デバッグモードを指定する．主にログをコンソールに出力するかどうかを指定する．
+    /// @param file_name ファイル名を指定する．（デフォルトは"blackbox"）
+    /// @param storage_preset_profile mcapのstorage　profileを指定する．（デフォルトはstorage_profile_t::zstd_fast）
+    /// @param max_cache_size キャッシュサイズを指定する．レコードするサイズによって最適な変更する．（デフォルトは1024*128）
+    BlackBox(rclcpp::Node* node, debug_mode_t debug_mode, std::string file_name="blackbox", storage_profile_t storage_preset_profile=storage_profile_t::zstd_fast, uint64_t max_cache_size=1024*128);
 
     virtual ~BlackBox() noexcept
     {

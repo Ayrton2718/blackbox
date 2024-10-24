@@ -20,6 +20,8 @@ enum log_type_t{
     LIB_DEBUG=rcl_interfaces::msg::Log::DEBUG+1     // Debug modeのときだけレコード
 };
 
+
+/// @brief ログを記録するクラス
 class LogRecorder : BlackBoxWriter<rcl_interfaces::msg::Log>
 {
 public:
@@ -34,6 +36,10 @@ public:
     public:
         Logger(void){}
 
+        /// @brief ログの初期化
+        /// @param handle blackbox::BlackBoxNodeのポインタ（blackbox::LogRecorderのポインタ）
+        /// @param log_type ログの重要度
+        /// @param tag_name ログのタグ名
         void init(LogRecorder* handle, log_type_t log_type, std::string tag_name){
             _handle = handle;
             _log_type = log_type;
@@ -94,4 +100,6 @@ using Logger = LogRecorder::Logger;
 
 }
 
+// obj: blackbox::Loggerのインスタンス
+// ...: ログメッセージ（fmt or std::string）
 #define TAGGER(obj, ...) if(blackbox::Logger::is_enable(obj)){blackbox::Logger::log(obj, basename(__FILE__), __func__, __LINE__, __VA_ARGS__);}

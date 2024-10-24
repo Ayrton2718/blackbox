@@ -10,6 +10,9 @@
 namespace blackbox
 {
 
+/// @brief Subscriber + レコードのクラス
+/// @tparam MessageT メッセージ型
+/// @tparam IS_ENABLE_RECORD レコードを有効にするかを指定する．（デフォルトはtrue）
 template<typename MessageT, bool IS_ENABLE_RECORD=true>
 class SubRecord : private BlackBoxWriter<MessageT>
 {
@@ -17,6 +20,12 @@ public:
     SubRecord() : BlackBoxWriter<MessageT>(){
     }
 
+    /// @brief 初期化
+    /// @param node blackbox::BlackBoxNodeのポインタ
+    /// @param topic_name Topic名（"/"から始まる場合はそのまま、そうでない場合はノードのネームスペースを付与）
+    /// @param qos QoS
+    /// @param callback コールバック関数
+    /// @param drop_count ドロップ数（0はドロップなし）
     template<
         typename CallbackT,
         typename AllocatorT = std::allocator<void>,
@@ -37,6 +46,13 @@ public:
         this->init(static_cast<rclcpp::Node*>(node), static_cast<BlackBox*>(node), topic_name, qos, callback, drop_count, options, msg_mem_strat);
     }
 
+    /// @brief 初期化
+    /// @param node rclcpp::Nodeのポインタ
+    /// @param handle blackbox::BlackBoxのポインタ
+    /// @param topic_name Topic名（"/"から始まる場合はそのまま、そうでない場合はノードのネームスペースを付与）
+    /// @param qos QoS
+    /// @param callback コールバック関数
+    /// @param drop_count ドロップ数（0はドロップなし）
     template<
         typename CallbackT,
         typename AllocatorT = std::allocator<void>,

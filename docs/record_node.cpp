@@ -9,6 +9,8 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 
+// blackbox::BlackBoxを継承する
+// blackbox::Loggerを使わないのであれば、blackbox::BlackBoxのみの継承で良い
 class BlackBoxRecordNode : public rclcpp::Node, public blackbox::BlackBox
 {
 private:
@@ -22,6 +24,7 @@ public:
     BlackBoxRecordNode(const std::string &name_space = "", const rclcpp::NodeOptions &options = rclcpp::NodeOptions()) 
         : rclcpp::Node("blackbox_record_node", name_space, options), blackbox::BlackBox(this, blackbox::debug_mode_t::RELEASE)
     {
+        // rclcpp::Nodeとblackbox::BlackBoxを分けて継承する場合、以下のように2つのポインタを渡す
         // _rosout.init(this, this, "/rosout", rclcpp::RosoutQoS(), [](rcl_interfaces::msg::Log::SharedPtr msg){(void)msg;});
         _diagnostics.init(this, this, "/diagnostics", 1, [](diagnostic_msgs::msg::DiagnosticArray::SharedPtr msg){(void)msg;});
         _tf.init(this, this, "/tf", rclcpp::ServicesQoS(), [](tf2_msgs::msg::TFMessage::SharedPtr msg){(void)msg;});
