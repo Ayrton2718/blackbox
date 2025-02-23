@@ -10,6 +10,12 @@ namespace blackbox
 /// @brief 
 class ParamUpdater
 {
+private:
+    typedef struct{
+        std::mutex  lock;
+        rclcpp::ParameterValue value;
+    }param_t;
+
 public:
     template<typename ParamT>
     class Param
@@ -24,46 +30,29 @@ public:
         void init(ParamUpdater* handle, std::string name, ParamT default_value){
             _handle = handle;
             _name = name;
-            _value = default_value;
 
-            auto param_value = rclcpp::ParameterValue(default_value);
-            _param_type = param_value.get_type();
+            auto default_param = rclcpp::ParameterValue(default_value);
 
-            handle->bind_param(name, param_value, std::bind(&Param<ParamT>::update_param, this, std::placeholders::_1));
+            _param_type = default_param.get_type();
+            _param_obj = _handle->declare_param(name, default_param);
         }
 
         ParamT get(void){
-            std::lock_guard<std::mutex> lock(_locker);
-            return _value;
+            auto param = _handle->get_param(_param_obj);
+            return static_cast<ParamT>(param.get_value<ParamT>());
         }
 
         void set(ParamT new_value){
-            {
-                std::lock_guard<std::mutex> lock(_locker);
-                _value = new_value;
-            }
-
             auto param_value = rclcpp::ParameterValue(new_value);
-            _handle->set_param(_name, param_value);
+            _handle->set_param(_param_obj, _name, param_value);
         }
 
     private:
-        bool update_param(const rclcpp::Parameter& param){
-            if(_param_type == param.get_type()){
-                std::lock_guard<std::mutex> lock(_locker);
-                _value = static_cast<ParamT>(param.get_value<ParamT>());
-                return true;
-            }
-            return false;
-        }
-
-    private:
-        ParamUpdater*           _handle = nullptr;
-        std::string             _name;
-        rclcpp::ParameterType   _param_type = rclcpp::ParameterType::PARAMETER_NOT_SET;
-
-        std::mutex  _locker;
-        ParamT      _value;
+        ParamUpdater*               _handle = nullptr;
+        std::string                 _name;
+        
+        rclcpp::ParameterType       _param_type = rclcpp::ParameterType::PARAMETER_NOT_SET;
+        std::shared_ptr<param_t>    _param_obj;
     };
 
 public:
@@ -77,6 +66,13 @@ private:
         _node = node;
         _info.init(lr, blackbox::LIB_INFO, "bb_param");
 
+        auto result = node->list_parameters({}, 10);
+        TAGGER(_info, "==== Parameter list ====");
+        for (const auto & param_name : result.names) {
+            TAGGER(_info, "Parameter %s", param_name.c_str());
+        }
+        TAGGER(_info, "========================");
+
         if(enable_update)
         {
             _param_callback_handle = _node->add_on_set_parameters_callback(
@@ -85,17 +81,53 @@ private:
         }
     }
     
-    void bind_param(std::string name, const rclcpp::ParameterValue& param_value, std::function<bool(const rclcpp::Parameter&)> function){
+    std::shared_ptr<param_t> declare_param(std::string name, const rclcpp::ParameterValue& default_param){
+        std::shared_ptr<param_t> return_param = nullptr;
+        
         {
-            std::lock_guard<std::mutex> lock(_locker);
-            _params[name] = function;
+            auto it = _params.find(name);
+            if(it != _params.end())
+            {
+                return_param = it->second;
+                TAGGER(_info, "Parameter %s already exists", name.c_str());
+            }
+            else
+            {
+                rclcpp::Parameter new_param;
+                _node->declare_parameter(name, default_param);
+                new_param = _node->get_parameter(name);
+                TAGGER(_info, "Parameter %s declared", name.c_str());
+
+                return_param = std::make_shared<param_t>();
+                return_param->value = new_param.get_parameter_value();
+
+                _locker.lock();
+                _params[name] = return_param;
+                _locker.unlock();
+            }
         }
 
-        _node->declare_parameter(name, param_value);
+        if(return_param->value.get_type() != default_param.get_type()){
+            auto return_str = rclcpp::Parameter(name, return_param->value).value_to_string();
+            auto default_str = rclcpp::Parameter(name, default_param).value_to_string();
+            TAGGER(_info, "Parameter %s type error, %s -> %s", name.c_str(), default_str.c_str(), return_str.c_str());
+
+            return_param = nullptr;
+        }
+
+        return return_param;
     }
 
-    void set_param(std::string name, const rclcpp::ParameterValue& param_value){
+    void set_param(std::shared_ptr<param_t> obj, std::string name, const rclcpp::ParameterValue& param_value){
         _node->set_parameter(rclcpp::Parameter(name, param_value));
+
+        std::lock_guard<std::mutex> lock(obj->lock);
+        obj->value = param_value;
+    }
+
+    rclcpp::Parameter get_param(std::shared_ptr<param_t> obj){
+        std::lock_guard<std::mutex> lock(obj->lock);
+        return rclcpp::Parameter("", obj->value);
     }
 
     rcl_interfaces::msg::SetParametersResult onParameterChange(
@@ -106,14 +138,14 @@ private:
             for (const rclcpp::Parameter& param : parameters) {
                 auto it = _params.find(param.get_name());
                 if (it != _params.end()) {
-                    if(it->second(param)){
+                    std::lock_guard<std::mutex> lock(it->second->lock);
+                    if(it->second->value.get_type() == param.get_type()){
+                        it->second->value = param.get_parameter_value();
                         TAGGER(_info, "Parameter %s updated, value: %s", param.get_name().c_str(), param.value_to_string().c_str());
                     }else{
-                        // TODO type error
-                        TAGGER(_info, "Parameter %s type error", param.get_name().c_str());
+                        TAGGER(_info, "Parameter %s type error, %s", param.get_name().c_str(), param.value_to_string().c_str());
                     }
                 }else{
-                    // TODO undefined error
                     TAGGER(_info, "Parameter %s undefined", param.get_name().c_str());
                 }
             }
@@ -132,7 +164,7 @@ private:
     Logger _info;
 
     std::mutex _locker;
-    std::map<std::string, std::function< bool(const rclcpp::Parameter&)>> _params;
+    std::map<std::string, std::shared_ptr<param_t>> _params;
 };
 
 
