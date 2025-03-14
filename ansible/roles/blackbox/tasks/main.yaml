@@ -32,21 +32,3 @@
     src: "{{ playbook_dir }}/roles/blackbox/script/blackbox_merge"
     dest: /usr/bin/blackbox_merge
     mode: '0755'
-
-- name: Create systemd service file for blackbox-archive.service
-  become: yes
-  template:
-    src: "{{ playbook_dir }}/roles/blackbox/script/blackbox-archive.service"
-    dest: /etc/systemd/system/blackbox-archive.service
-    mode: '0644'
-
-- name: Reload systemd daemon
-  become: yes
-  command: systemctl daemon-reload
-
-- name: Enable blackbox-archive service
-  become: yes
-  systemd:
-    name: blackbox-archive.service
-    enabled: yes
-    state: started

@@ -36,12 +36,14 @@ public:
     /// @param qos QoS
     /// @param drop_count ドロップ数（0はドロップなし）
     void init(rclcpp::Node* node, BlackBox* handle, std::string topic_name, const rclcpp::QoS& qos=10, size_t drop_count=0){
-        _publisher = node->create_publisher<MessageT>(topic_name, qos);
+        std::string resolve_name = node->get_node_topics_interface()->resolve_topic_name(topic_name);
+
+        _publisher = node->create_publisher<MessageT>(resolve_name, qos);
 
         if(IS_ENABLE_RECORD)
         {
             std::string ns;
-            if(topic_name[0] == '/')
+            if(resolve_name[0] == '/')
             {
                 ns = "";
             }else{
@@ -50,7 +52,7 @@ public:
                     ns += '/';
                 }
             }
-            BlackBoxWriter<MessageT>::BlackBoxWriter_cons(handle, ns + topic_name, drop_count, qos);
+            BlackBoxWriter<MessageT>::BlackBoxWriter_cons(handle, ns + resolve_name, drop_count, qos);
         }
     }
     

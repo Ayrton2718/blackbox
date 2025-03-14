@@ -71,10 +71,12 @@ public:
         typename MessageMemoryStrategyT::SharedPtr msg_mem_strat = (
         MessageMemoryStrategyT::create_default()))
     {
+        std::string resolve_name = node->get_node_topics_interface()->resolve_topic_name(topic_name);
+
         if(IS_ENABLE_RECORD)
         {
             std::string ns;
-            if(topic_name[0] == '/')
+            if(resolve_name[0] == '/')
             {
                 ns = "";
             }else{
@@ -83,8 +85,8 @@ public:
                     ns += '/';
                 }
             }
-            BlackBoxWriter<MessageT>::BlackBoxWriter_cons(handle, ns + topic_name, drop_count, qos);
-            printf("%s, %s\n", ns.c_str(), topic_name.c_str());
+            BlackBoxWriter<MessageT>::BlackBoxWriter_cons(handle, ns + resolve_name, drop_count, qos);
+            printf("%s, %s\n", ns.c_str(), resolve_name.c_str());
             fflush(stdout);
         }
 
@@ -95,7 +97,7 @@ public:
                     BlackBoxWriter<MessageT>::write(msg);
             };
 
-        _subscription = node->create_subscription<MessageT>(topic_name, qos, cur_callback, options, msg_mem_strat);
+        _subscription = node->create_subscription<MessageT>(resolve_name, qos, cur_callback, options, msg_mem_strat);
     }
 
 private:
